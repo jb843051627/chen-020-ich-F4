@@ -74,6 +74,15 @@ public class TIchPreLine implements Serializable {
     @ApiModelProperty(value = "让位顺位(数值大的先说话)")
     private Integer priority;
 
+    /**
+     * 管项代号：YEARS=本人从艺年数、DISCIPLES=带徒人数。
+     * 两头各走各的线，新判定出口（ITIchLineVerdictService）按此分栏取线；
+     * 空着的旧线不进新道两头判定，老的"按线代号取值"那条路不看这一栏、照旧不动。
+     */
+    @TableField("line_kind")
+    @ApiModelProperty(value = "管项代号 YEARS从艺年数 DISCIPLES带徒人数（空值仅走按代号取值老路）")
+    private String lineKind;
+
     /** 线的情形 0在场 1已停用 */
     @TableField("status")
     @ApiModelProperty(value = "线的情形 0在场 1已停用")
@@ -181,6 +190,14 @@ public class TIchPreLine implements Serializable {
 
     public void setPriority(Integer priority) {
         this.priority = priority;
+    }
+
+    public String getLineKind() {
+        return lineKind;
+    }
+
+    public void setLineKind(String lineKind) {
+        this.lineKind = lineKind;
     }
 
     public Integer getStatus() {
