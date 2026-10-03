@@ -140,6 +140,51 @@ CREATE TABLE IF NOT EXISTS t_ich_pre_line (
   PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='申报准入门槛线';
 
+-- 2026-10-03 起：申报准入两头看（本人从艺年数一条线、带徒人数另一条线管着）。
+-- 判定另立回执两张表，每次判定只追加不改写：这一回没过与后来补过是两笔，各留各的；
+-- 结论落定时把线代号与启用之日一并钉在明细行里，往后换了线也不回头改这一段。
+-- 无可用线（当刻一条也够不着）不给结论：verdict=0，线代号与启用之日两栏空着，
+-- 不许抓邻近那条的数凑一个像样的答复。
+CREATE TABLE IF NOT EXISTS t_ich_pre_declare (
+  id bigint NOT NULL COMMENT '主键',
+  declare_no varchar(64) DEFAULT NULL COMMENT '申报批据号（一回判定一笔）',
+  applicant_code varchar(64) DEFAULT NULL COMMENT '申报人代号',
+  apply_at datetime DEFAULT NULL COMMENT '申请注明那一刻（复算就按这一刻回看线册）',
+  verdict int DEFAULT NULL COMMENT '判定情形 0无结论(当刻无可用线) 1准入 2不准入(两头有一头越线)',
+  head_total int DEFAULT NULL COMMENT '两头逐条判出的条数（与明细表同回算，恒为2）',
+  del_flag int DEFAULT '0' COMMENT '删除标记 0正常 1删除',
+  create_by varchar(64) DEFAULT NULL COMMENT '创建者',
+  create_time datetime DEFAULT NULL COMMENT '创建时间',
+  update_by varchar(64) DEFAULT NULL COMMENT '更新者',
+  update_time datetime DEFAULT NULL COMMENT '更新时间',
+  remark varchar(500) DEFAULT NULL COMMENT '备注',
+  PRIMARY KEY (id),
+  KEY idx_pre_declare_applicant (applicant_code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='传承人申报准入判定回执';
+
+-- 一头一行：从艺年数、带徒人数各走各的门槛线，各自落在不在线段内、越了亮该头的数。
+-- 线代号与启用之日钉死在这一行：线册后来换了线，这一笔也不回头改。
+CREATE TABLE IF NOT EXISTS t_ich_pre_declare_head (
+  id bigint NOT NULL COMMENT '主键',
+  declare_id bigint NOT NULL COMMENT '所属判定回执 t_ich_pre_declare.id',
+  head_no int NOT NULL COMMENT '哪一头 0本人从艺年数 1带徒人数',
+  head_name varchar(64) DEFAULT NULL COMMENT '头名（从艺年数/带徒人数）',
+  metric decimal(12,2) DEFAULT NULL COMMENT '这一头申报的实际数（年数/人数）',
+  rule_code varchar(64) DEFAULT NULL COMMENT '判定那一刻钉下的线代号（无可用线时空着）',
+  eff_start datetime DEFAULT NULL COMMENT '判定那一刻钉下的启用之日（无可用线时空着）',
+  tier int DEFAULT NULL COMMENT '落到哪一层 1起分层 2过线层 3优线层 4越层；无可用线为空',
+  passed int DEFAULT NULL COMMENT '这一头在线段内否 0越线 1过；无可用线为空',
+  prompt varchar(500) DEFAULT NULL COMMENT '没过的提示：把越线那一头的分界数与实际数亮出来，不许只回一句没通过',
+  del_flag int DEFAULT '0' COMMENT '删除标记 0正常 1删除',
+  create_by varchar(64) DEFAULT NULL COMMENT '创建者',
+  create_time datetime DEFAULT NULL COMMENT '创建时间',
+  update_by varchar(64) DEFAULT NULL COMMENT '更新者',
+  update_time datetime DEFAULT NULL COMMENT '更新时间',
+  remark varchar(500) DEFAULT NULL COMMENT '备注',
+  PRIMARY KEY (id),
+  KEY idx_pre_declare_head (declare_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='申报准入两头判定明细';
+
 CREATE TABLE IF NOT EXISTS t_ich_project (
   id bigint NOT NULL COMMENT '主键',
   site_no varchar(64) DEFAULT NULL COMMENT '名录项目代号',
